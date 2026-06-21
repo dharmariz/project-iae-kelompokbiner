@@ -5,11 +5,15 @@ services:
             - "8003:8003"
         env_file:
             - .env
+        environment:
+            DB_HOST: reservation_db
+            RABBITMQ_HOST: rabbitmq
         depends_on:
             - reservation_db
-            - rabbitmq
         networks:
             - crrs_network
+        volumes:
+            - .:/var/www 
 
     reservation_db:
         image: mysql:8.0
@@ -19,14 +23,6 @@ services:
             MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
         volumes:
             - reservation_db_data:/var/lib/mysql
-        networks:
-            - crrs_network
-
-    rabbitmq:
-        image: rabbitmq:3-management
-        ports:
-            - "5672:5672"
-            - "15672:15672"
         networks:
             - crrs_network
 

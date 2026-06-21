@@ -10,12 +10,12 @@ class ReservationCreatedJob implements ShouldQueue
 {
     use Queueable;
 
-    public $data;
+    public array $data;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($data)
+    public function __construct(array $data)
     {
         $this->data = $data;
     }

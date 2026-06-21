@@ -16,10 +16,11 @@ class RoomServiceClient
     public function getRoom(int $roomId): ?array
     {
         try {
-            $response = Http::timeout(5)->get("{$this->baseUrl}/api/rooms/{$roomId}");
+            $response = Http::timeout(30)->get("{$this->baseUrl}/api/rooms/{$roomId}");
             return $response->successful() ? $response->json() : null;
         } catch (\Exception $e) {
-            return null;
+            // Lempar error asli agar terlihat di Postman
+            throw new \Exception("Gagal connect ke Room Service: " . $e->getMessage());
         }
     }
 }

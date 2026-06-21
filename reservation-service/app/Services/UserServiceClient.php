@@ -16,10 +16,11 @@ class UserServiceClient
     public function getUser(int $userId): ?array
     {
         try {
-            $response = Http::timeout(5)->get("{$this->baseUrl}/api/users/{$userId}");
+            $response = Http::timeout(30)->get("{$this->baseUrl}/api/users/{$userId}");
             return $response->successful() ? $response->json() : null;
         } catch (\Exception $e) {
-            return null;
+            // Lempar error asli agar terlihat di Postman
+            throw new \Exception("Gagal connect ke User Service: " . $e->getMessage());
         }
     }
 }

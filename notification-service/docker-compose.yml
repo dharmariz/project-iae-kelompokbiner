@@ -1,0 +1,43 @@
+services:
+  notification-service:
+    build: .
+    ports:
+      - "8004:8004"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: notification_db
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      - notification_db
+      - rabbitmq
+    networks:
+      - crrs_network
+    volumes:
+      - .:/var/www 
+
+  notification_db:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: crrs_notification_db
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    volumes:
+      - notification_db_data:/var/lib/mysql
+    networks:
+      - crrs_network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672" # Port komunikasi antar service
+      - "15672:15672" # Port dashboard UI (guest/guest)
+    networks:
+      - crrs_network
+
+networks:
+  crrs_network:
+    external: true
+
+volumes:
+  notification_db_data:
