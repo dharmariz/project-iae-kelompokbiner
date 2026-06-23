@@ -4,14 +4,14 @@ set -e
 
 BASE_DIR="$(pwd)"
 
-echo "🚀 Starting CRRS Microservices via Docker..."
+echo "🚀 Starting CRRS Microservices Via Docker..."
 
 # 1. Pastikan network sudah ada
 if ! docker network ls | grep -q "crrs_network"; then
-    echo "🌐 Creating crrs_network..."
+    echo "🌐 Creating CRRS_Network..."
     docker network create crrs_network
 else
-    echo "✅ crrs_network already exists"
+    echo "✅ CRRS_Network already exists"
 fi
 
 # =========================
