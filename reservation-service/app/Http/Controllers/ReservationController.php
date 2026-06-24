@@ -16,6 +16,18 @@ class ReservationController extends Controller
         private RabbitMQPublisher $publisher
     ) {}
 
+    // Fungsi bantu untuk cek role admin via User Service
+    private function checkAdmin(Request $request): bool
+    {
+        $userId = $request->header('X-User-Id');
+        if (!$userId) return false;
+
+        $user = $this->userClient->getUser((int) $userId);
+
+        // Cek jika user ditemukan dan role-nya admin
+        return $user && isset($user['user']['role']) && $user['user']['role'] === 'admin';
+    }
+
     // GET /reservations
     public function index()
     {
@@ -92,9 +104,13 @@ class ReservationController extends Controller
         return response()->json($reservation);
     }
 
-    // DELETE /reservations/{id}
-    public function destroy(int $id)
+    // DELETE /reservations/{id} (Hanya Admin)
+    public function destroy(Request $request, int $id)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['message' => 'Forbidden: Hanya Admin yang bisa membatalkan reservasi'], 403);
+        }
+
         $reservation = Reservation::findOrFail($id);
         $reservation->update(['status' => 'cancelled']);
 
@@ -106,9 +122,13 @@ class ReservationController extends Controller
         return response()->json(['message' => 'Reservasi dibatalkan']);
     }
 
-    // PUT /reservations/{id}/approve
-    public function approve(int $id)
+    // PUT /reservations/{id}/approve (Hanya Admin)
+    public function approve(Request $request, int $id)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['message' => 'Forbidden: Hanya Admin yang bisa menyetujui reservasi'], 403);
+        }
+
         $reservation = Reservation::findOrFail($id);
         $reservation->update(['status' => 'approved']);
 
@@ -120,9 +140,13 @@ class ReservationController extends Controller
         return response()->json(['message' => 'Reservasi disetujui', 'data' => $reservation]);
     }
 
-    // PUT /reservations/{id}/reject
-    public function reject(int $id)
+    // PUT /reservations/{id}/reject (Hanya Admin)
+    public function reject(Request $request, int $id)
     {
+        if (!$this->checkAdmin($request)) {
+            return response()->json(['message' => 'Forbidden: Hanya Admin yang bisa menolak reservasi'], 403);
+        }
+
         $reservation = Reservation::findOrFail($id);
         $reservation->update(['status' => 'rejected']);
 

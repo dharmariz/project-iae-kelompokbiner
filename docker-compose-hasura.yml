@@ -1,0 +1,30 @@
+services:
+  # 1. Database Metadata untuk Hasura (PostgreSQL v15)
+  hasura-metadata-db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: postgrespassword
+    networks:
+      - crrs_network
+
+  # 2. Hasura GraphQL Engine
+  hasura:
+    image: hasura/graphql-engine:latest
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      # Koneksi ke PostgreSQL metadata
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgrespassword@hasura-metadata-db:5432/postgres
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_DEV_MODE: "true"
+      HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
+    depends_on:
+      - hasura-metadata-db
+    networks:
+      - crrs_network
+
+networks:
+  crrs_network:
+    external: true

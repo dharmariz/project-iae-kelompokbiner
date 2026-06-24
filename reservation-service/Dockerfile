@@ -1,9 +1,8 @@
-
 FROM php:8.4-fpm
 
 RUN apt-get update && apt-get install -y \
-    libzip-dev zip unzip curl git \
-    && docker-php-ext-install pdo_mysql zip sockets
+    libzip-dev zip unzip curl git libpq-dev \
+    && docker-php-ext-install pdo_pgsql zip sockets
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

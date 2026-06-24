@@ -13,16 +13,16 @@ services:
         networks:
             - crrs_network
         volumes:
-            - .:/var/www 
+            - .:/var/www
 
     reservation_db:
-        image: mysql:8.0
+        image: postgres:15
         environment:
-            MYSQL_DATABASE: crrs_reservation_db
-            MYSQL_ROOT_PASSWORD: secret
-            MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+            POSTGRES_DB: crrs_reservation_db
+            POSTGRES_USER: root
+            POSTGRES_PASSWORD: secret
         volumes:
-            - reservation_db_data:/var/lib/mysql
+            - reservation_db_data:/var/lib/postgresql/data
         networks:
             - crrs_network
 

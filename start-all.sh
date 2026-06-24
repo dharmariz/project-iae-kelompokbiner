@@ -41,12 +41,12 @@ cd "$BASE_DIR/room-service"
 docker-compose up -d
 
 # =========================
-# RESERVATION SERVICE
+# RESERVATION SERVICE (Pakai --build agar Dockerfile baru terbaca)
 # =========================
 echo ""
-echo "▶ Starting Reservation Service..."
+echo "▶ Starting Reservation Service (PostgreSQL)..."
 cd "$BASE_DIR/reservation-service"
-docker-compose up -d
+docker-compose up -d --build
 
 # =========================
 # MIGRATE SEMUA SERVICE
@@ -74,6 +74,16 @@ echo "🌱 Seeding 10 ruangan di Room Service..."
 cd "$BASE_DIR/room-service"
 docker-compose exec -T room-service php artisan db:seed --force
 
+# =========================
+# HASURA GRAPHQL ENGINE (PostgreSQL + Hasura)
+# =========================
+echo ""
+echo "▶ Starting Hasura GraphQL Engine..."
+cd "$BASE_DIR"
+docker-compose -f docker-compose-hasura.yml up -d
+echo "⏳ Waiting 15s for Hasura to initialize..."
+sleep 15
+
 echo ""
 echo "✅ All services are running!"
 echo ""
@@ -83,8 +93,8 @@ echo "   Room Service         : http://127.0.0.1:8002"
 echo "   Reservation Service  : http://127.0.0.1:8003"
 echo "   Notification Service : http://127.0.0.1:8004"
 echo "   RabbitMQ Dashboard   : http://127.0.0.1:15672"
+echo "   Hasura Dashboard     : http://127.0.0.1:8080"
 echo "   (RabbitMQ login: guest / guest)"
 echo ""
 echo "📨 Untuk mulai mendengarkan event RabbitMQ, buka terminal BARU dan jalankan:"
-echo "   cd notification-service"
-echo "   docker-compose exec notification-service php artisan rabbitmq:consume-manual"
+echo "   docker exec notification-service-notification-service-1 php artisan rabbitmq:consume-manual"
