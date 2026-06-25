@@ -7,6 +7,7 @@ use App\Services\UserServiceClient;
 use App\Services\RoomServiceClient;
 use App\Services\RabbitMQPublisher;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class ReservationController extends Controller
 {
@@ -24,7 +25,6 @@ class ReservationController extends Controller
 
         $user = $this->userClient->getUser((int) $userId);
 
-        // Cek jika user ditemukan dan role-nya admin
         return $user && isset($user['user']['role']) && $user['user']['role'] === 'admin';
     }
 
@@ -52,15 +52,20 @@ class ReservationController extends Controller
             'end_datetime'   => 'required|date|after:start_datetime',
         ]);
 
-        // Validasi user exist di user-service
         $user = $this->userClient->getUser($request->user_id);
         if (!$user) return response()->json(['message' => 'User tidak ditemukan'], 404);
 
-        // Validasi room exist di room-service
         $room = $this->roomClient->getRoom($request->room_id);
         if (!$room) return response()->json(['message' => 'Ruangan tidak ditemukan'], 404);
 
-        // Cek jadwal bentrok
+        // VALIDASI STATUS RUANGAN (Hanya yang "Available" yang bisa dipesan)
+        $roomStatus = $room['status'] ?? $room['data']['status'] ?? null;
+        if (strtolower($roomStatus) !== 'available') {
+            return response()->json([
+                'message' => 'Maaf, ruangan tidak dapat dipesan karena sedang berkondisi: ' . ($roomStatus ?? 'Tidak Diketahui')
+            ], 422);
+        }
+
         $conflict = Reservation::where('room_id', $request->room_id)
             ->whereNotIn('status', ['cancelled', 'rejected'])
             ->where(function ($q) use ($request) {
@@ -83,7 +88,6 @@ class ReservationController extends Controller
             'status'         => 'pending',
         ]);
 
-        // Publish ke RabbitMQ
         $this->publisher->publish('reservation.created', [
             'reservation_id' => $reservation->id,
             'user_id'        => $reservation->user_id,
@@ -131,6 +135,13 @@ class ReservationController extends Controller
 
         $reservation = Reservation::findOrFail($id);
         $reservation->update(['status' => 'approved']);
+
+        // OTOMATISASI: Update status room menjadi Occupied di Room Service (Port 8002)
+        $roomServiceUrl = env('ROOM_SERVICE_URL', 'http://room-service:8002');
+        Http::withHeaders(['Accept' => 'application/json'])
+            ->put("{$roomServiceUrl}/api/rooms/" . $reservation->room_id, [
+                'status' => 'Occupied'
+            ]);
 
         $this->publisher->publish('reservation.approved', [
             'reservation_id' => $reservation->id,
